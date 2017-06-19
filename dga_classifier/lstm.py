@@ -8,9 +8,9 @@ from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 import sklearn
 from sklearn.cross_validation import train_test_split
+import string
 
-
-def build_model(max_features, maxlen):
+def build_model(max_features=100, maxlen=256):
     """Build LSTM model"""
     model = Sequential()
     model.add(Embedding(max_features, 128, input_length=maxlen))
@@ -35,8 +35,11 @@ def run(max_epoch=25, nfolds=10, batch_size=128):
     # Generate a dictionary of valid characters
     valid_chars = {x:idx+1 for idx, x in enumerate(set(''.join(X)))}
 
-    max_features = len(valid_chars) + 1
-    maxlen = np.max([len(x) for x in X])
+    #max_features = len(valid_chars) + 1
+    #maxlen = np.max([len(x) for x in X])
+
+    max_features = 100
+    maxlen = 256
 
     # Convert characters to int and pad
     X = [[valid_chars[y] for y in x] for x in X]
@@ -87,3 +90,67 @@ def run(max_epoch=25, nfolds=10, batch_size=128):
         final_data.append(out_data)
 
     return final_data
+
+
+def train(max_epoch=25, batch_size=128):
+    indata = data.get_data()
+
+    # Extract data and labels
+    X = [x[1] for x in indata]
+    labels = [x[0] for x in indata]
+
+    # Generate a dictionary of valid characters
+    all_chars = string.ascii_letters + string.digits + '-.'
+    valid_chars = {x:idx+1 for idx, x in enumerate(all_chars)}
+
+    print 'Build model...'
+    model = build_model()
+
+    maxlen = 256
+    # Convert characters to int and pad
+    X = [[valid_chars[y] for y in x] for x in X]
+    X = sequence.pad_sequences(X, maxlen=maxlen)
+
+    # Convert labels to 0-1
+    y = [0 if x == 'benign' else 1 for x in labels]
+
+    X_train, X_holdout, y_train, y_holdout = train_test_split(X, y, test_size=0.05)
+    best_iter = -1
+    best_auc = 0.0
+
+    for ep in range(max_epoch):
+        model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=1)
+
+        t_probs = model.predict_proba(X_holdout)
+        t_auc = sklearn.metrics.roc_auc_score(y_holdout, t_probs)
+
+        print 'Epoch %d: auc = %f (best=%f)' % (ep, t_auc, best_auc)
+
+        if t_auc > best_auc:
+            best_auc = t_auc
+            best_iter = ep
+        else:
+            # No longer improving...break and calc statistics
+            if (ep-best_iter) > 2:
+                break
+
+    return model
+
+def test(X_test, y_test):
+    maxlen = 256
+    # Generate a dictionary of valid characters
+    all_chars = string.ascii_letters + string.digits + '-.'
+    valid_chars = {x:idx+1 for idx, x in enumerate(all_chars)}
+    X_test = [[valid_chars[y] for y in x] for x in X_test]
+    X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
+    
+    model = build_model()
+    model.load_weights('lstm.h5')
+    probs = model.predict_proba(X_test)
+    conf_m = sklearn.metrics.confusion_matrix(y_test, probs > .5)
+
+    out_data = {'y':y_test, 'probs':probs, 'confusion_matrix': conf_m}
+    return out_data
+
+
+

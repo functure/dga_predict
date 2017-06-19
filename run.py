@@ -59,7 +59,12 @@ def create_figs(isbigram=True, islstm=True, nfolds=10, force=False):
             t_fpr, t_tpr, _ = roc_curve(lstm_result['y'], lstm_result['probs'])
             fpr.append(t_fpr)
             tpr.append(t_tpr)
-        lstm_binary_fpr, lstm_binary_tpr, lstm_binary_auc = calc_macro_roc(fpr, tpr)
+    	all_n = len(filter(lambda x: x == 'benign', results['lstm'][0]['labels']))
+	all_p = len(results['lstm'][0]['labels']) - all_n
+    	TP,FP,FN,TN = lstm_result['confusion_matrix'].reshape((1,4)).tolist()[0]
+	print "TP:{:.3f} FP:{:.3f} TN:{:.3f} FN:{:.3f}".format(float(TP)*100/all_p,float(FP*100)/all_p,float(TN*100)/all_p,float(FN*100)/all_p)
+ 	print all_p   
+    lstm_binary_fpr, lstm_binary_tpr, lstm_binary_auc = calc_macro_roc(fpr, tpr)
 
     # Save figure
     from matplotlib import pyplot as plt
@@ -88,7 +93,7 @@ def calc_macro_roc(fpr, tpr):
     mean_tpr = np.zeros_like(all_fpr)
     for i in range(len(tpr)):
         mean_tpr += interp(all_fpr, fpr[i], tpr[i])
-
+    
     return all_fpr, mean_tpr / len(tpr), auc(all_fpr, mean_tpr) / len(tpr)
 
 if __name__ == "__main__":
