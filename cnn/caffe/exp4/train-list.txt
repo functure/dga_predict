@@ -1,0 +1,1 @@
+/home/can/Desktop/dga_predict/dataset/hdf5/mix-conv-219870.h5
