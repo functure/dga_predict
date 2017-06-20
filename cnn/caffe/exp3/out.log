@@ -1,0 +1,4 @@
+Iteration 1000, loss = 0
+Iteration 1000, Testing net (#0)
+    Test net output #0: accuracy = 0.940625
+    Test net output #1: loss = 5.18561 (* 1 = 5.18561 loss)
