@@ -1,0 +1,8 @@
+/home/can/dga_predict/dataset/hdf5/shuffle-conv-2211863.h5
+
+#malware_dns_53_uniq-conv.h5
+#mix-133926.h5
+#mix-2211863.h5
+#mix-conv-133926.h5
+#mix-conv-219870.h5
+#mix-conv-2211863.h5
